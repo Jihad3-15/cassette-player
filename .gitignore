@@ -27,3 +27,42 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# ---------------------------------------------------------------------------
+# Cassette Player safety block
+# ---------------------------------------------------------------------------
+
+# Generated platform folders (created in CI by tool/bootstrap_platforms.sh)
+/android/
+/ios/
+
+# Signing secrets: never commit these
+*.jks
+*.keystore
+key.properties
+*.p12
+*.mobileprovision
+*.cer
+secrets.*
+
+# Local machine config
+android/local.properties
+.idea/
+.vscode/
+.DS_Store
+
+# Build outputs
+*.apk
+*.aab
+*.ipa
+
+# Audio and test data (your music stays on your device, not in git)
+*.mp3
+*.flac
+*.wav
+*.m4a
+*.aac
+*.ogg
+*.opus
+*.db
+*.sqlite
