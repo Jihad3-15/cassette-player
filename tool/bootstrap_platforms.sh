@@ -60,4 +60,9 @@ if [[ -f test/widget_test.dart ]] && grep -q 'MyApp' test/widget_test.dart; then
 fi
 
 python3 tool/patch_platforms.py
+
+# App icon (assets/icon/): generate every Android and iOS size from the
+# 1024px source. Config lives under flutter_launcher_icons in pubspec.yaml.
+flutter pub get
+dart run flutter_launcher_icons
 echo "bootstrap: done"
