@@ -67,3 +67,7 @@ android/local.properties
 *.db
 *.sqlite
 ci-logs/
+
+# Python bytecode
+__pycache__/
+*.pyc
