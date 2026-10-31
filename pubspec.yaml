@@ -23,6 +23,9 @@ dependencies:
   path_provider: ^2.1.4
   path: ^1.9.0
   provider: ^6.1.2
+  # YouTube audio import. Only used by builds made with
+  # --dart-define=YOUTUBE_IMPORT=true (see lib/core/features.dart).
+  youtube_explode_dart: ^3.1.0
 
 dev_dependencies:
   flutter_test:

@@ -11,7 +11,10 @@ import sys
 import urllib.request
 
 job = sys.argv[1] if len(sys.argv) > 1 else "build"
-logs = sorted(pathlib.Path("ci-logs").glob("*.log"))
+# Optional: conclusion (default "failure") and a log-name prefix to include.
+conclusion = sys.argv[2] if len(sys.argv) > 2 else "failure"
+prefix = sys.argv[3] if len(sys.argv) > 3 else ""
+logs = sorted(pathlib.Path("ci-logs").glob(f"{prefix}*.log"))
 parts = []
 for p in logs:
     lines = p.read_text(errors="replace").splitlines()
@@ -25,11 +28,11 @@ if len(text) > 64000:
     text = text[:30000] + "\n...[trimmed]...\n" + text[-33000:]
 
 body = {
-    "name": f"{job} failure log",
+    "name": f"{job} failure log" if conclusion == "failure" else f"{job} log",
     "head_sha": os.environ["GITHUB_SHA"],
     "status": "completed",
-    "conclusion": "failure",
-    "output": {"title": f"{job} failed", "summary": f"Captured output from {len(logs)} step(s).", "text": text},
+    "conclusion": conclusion,
+    "output": {"title": f"{job} failed" if conclusion == "failure" else job, "summary": f"Captured output from {len(logs)} step(s).", "text": text},
 }
 req = urllib.request.Request(
     f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/check-runs",

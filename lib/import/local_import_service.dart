@@ -21,6 +21,7 @@ const Set<String> supportedAudioExtensions = {
   'ogg',
   'oga',
   'opus',
+  'webm',
 };
 
 /// Imports user-picked files into app-private storage. Everything happens on

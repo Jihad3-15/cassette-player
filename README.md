@@ -4,7 +4,8 @@ A local-only music library for your phone. Import audio files you already have, 
 
 ## Privacy
 
-- **No network.** The app makes no network calls. Release Android builds don't even request the `INTERNET` permission.
+- **No network.** The public release makes no network calls. Release Android builds don't even request the `INTERNET` permission.
+- **Optional YouTube build.** A separate personal build (`--dart-define=YOUTUBE_IMPORT=true`) adds "Add from YouTube link", which talks to YouTube only to fetch the audio you ask for and saves it on the phone. It is never published to the Releases page. Downloading from YouTube breaks YouTube's Terms of Service; only save audio you have the right to (your own uploads, Creative Commons, or creator-permitted downloads).
 - **No cloud backup.** On Android, `allowBackup` is off and data-extraction rules exclude everything from cloud backup and device-to-device transfer. On iPhone, the app's files are not shared through the Files app.
 - Your music, library database and artwork live in app-private storage on the device. If you uninstall the app, they are deleted.
 
@@ -34,3 +35,7 @@ This repo contains only the Dart code. There are no `android/` or `ios/` folders
 4. On pushes to `main`, it replaces the assets on the `latest` prerelease with `Cassette.apk` and `Cassette-unsigned.ipa`.
 
 To build locally with Flutter installed, run `bash tool/bootstrap_platforms.sh`, then `flutter pub get`, then `flutter build apk --release`.
+
+## Personal YouTube build
+
+Every push also builds `Cassette-YouTube.apk` and `Cassette-YouTube-unsigned.ipa` with the YouTube feature switched on. They are attached to the workflow run in the Actions tab (signed-in GitHub users only), not to the public release. YouTube changes its systems often, so this feature will break from time to time until the extractor library is updated.

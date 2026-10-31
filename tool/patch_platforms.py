@@ -19,6 +19,7 @@ Standard library only.
 
 from __future__ import annotations
 
+import os
 import plistlib
 import re
 import sys
@@ -163,7 +164,10 @@ def patch_android_manifest() -> None:
     internet = re.compile(
         r'[ \t]*<uses-permission\s+android:name="android\.permission\.INTERNET"\s*/>[ \t]*\n?'
     )
-    if internet.search(text):
+    # The YouTube build (CASSETTE_YOUTUBE=1) is the only one that needs the
+    # network; it gets INTERNET added below instead.
+    want_internet = os.environ.get("CASSETTE_YOUTUBE") == "1"
+    if not want_internet and internet.search(text):
         text = internet.sub("", text)
         note("AndroidManifest: removed INTERNET permission from main manifest")
 
@@ -171,7 +175,8 @@ def patch_android_manifest() -> None:
     m = re.search(r"<manifest\b[^>]*>\n?", text)
     insert_at = m.end()
     to_add = []
-    for perm in ANDROID_PERMISSIONS:
+    perms = ANDROID_PERMISSIONS + (["android.permission.INTERNET"] if want_internet else [])
+    for perm in perms:
         if f'android:name="{perm}"' not in text:
             to_add.append(f'    <uses-permission android:name="{perm}"/>\n')
             note(f"AndroidManifest: added permission {perm}")

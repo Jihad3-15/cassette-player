@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/features.dart';
 import 'import_flow.dart';
 import 'search_page.dart';
 import 'tabs/albums_tab.dart';
@@ -9,6 +10,7 @@ import 'tabs/songs_tab.dart';
 import 'widgets/empty_library.dart';
 import 'widgets/library_builder.dart';
 import 'widgets/mini_player.dart';
+import 'youtube_import_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -75,6 +77,12 @@ class _HomePageState extends State<HomePage> {
             icon: const Icon(Icons.add),
             onPressed: () => startImport(context),
           ),
+          if (kYouTubeImport)
+            IconButton(
+              tooltip: 'Add from YouTube link',
+              icon: const Icon(Icons.link),
+              onPressed: () => showYouTubeImport(context),
+            ),
         ],
       ),
       body: LibraryBuilder<int>(
