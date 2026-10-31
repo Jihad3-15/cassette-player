@@ -11,9 +11,11 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
 
-# Read-only by default; only the release job gets write access.
+# Read-only by default, plus checks: write so failed jobs can attach their
+# output to the commit. Only the release job gets contents: write.
 permissions:
   contents: read
+  checks: write
 
 jobs:
   analyze:
@@ -28,12 +30,18 @@ jobs:
           cache: true
 
       - name: Generate android/ and ios/
-        run: bash tool/bootstrap_platforms.sh
+        run: bash tool/ci_run.sh bootstrap bash tool/bootstrap_platforms.sh
 
-      - run: flutter pub get
+      - run: bash tool/ci_run.sh pub-get flutter pub get
 
       # Infos are reported but do not fail; warnings and errors do.
-      - run: flutter analyze --no-fatal-infos
+      - run: bash tool/ci_run.sh analyze flutter analyze --no-fatal-infos
+
+      - name: Report failure output
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tool/ci_report.py Analyze
 
   android:
     name: Android APK
@@ -55,15 +63,21 @@ jobs:
           cache: true
 
       - name: Generate android/ and ios/
-        run: bash tool/bootstrap_platforms.sh
+        run: bash tool/ci_run.sh bootstrap bash tool/bootstrap_platforms.sh
 
-      - run: flutter pub get
+      - run: bash tool/ci_run.sh pub-get flutter pub get
 
       # The generated template signs release builds with the debug key.
       # That is fine for V1 sideloading, but every CI runner has a different
       # debug key, so an update may require uninstalling the previous APK.
       # Add a real keystore (via repository secrets) before wider distribution.
-      - run: flutter build apk --release
+      - run: bash tool/ci_run.sh build-apk flutter build apk --release
+
+      - name: Report failure output
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tool/ci_report.py Android
 
       - uses: actions/upload-artifact@v6
         with:
@@ -84,11 +98,11 @@ jobs:
           cache: true
 
       - name: Generate android/ and ios/
-        run: bash tool/bootstrap_platforms.sh
+        run: bash tool/ci_run.sh bootstrap bash tool/bootstrap_platforms.sh
 
-      - run: flutter pub get
+      - run: bash tool/ci_run.sh pub-get flutter pub get
 
-      - run: flutter build ios --release --no-codesign
+      - run: bash tool/ci_run.sh build-ios flutter build ios --release --no-codesign
 
       # Sideloadly re-signs the app with the user's Apple ID at install time.
       - name: Package unsigned IPA
@@ -103,6 +117,12 @@ jobs:
           name: cassette-ios-unsigned
           path: cassette-unsigned.ipa
           if-no-files-found: error
+
+      - name: Report failure output
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tool/ci_report.py iOS
 
   release:
     name: Publish 'latest' release
