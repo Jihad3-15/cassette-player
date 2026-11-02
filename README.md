@@ -5,7 +5,7 @@ A local-only music library for your phone. Import audio files you already have, 
 ## Privacy
 
 - **No network.** The public release makes no network calls. Release Android builds don't even request the `INTERNET` permission.
-- **Optional YouTube build.** A separate personal build (`--dart-define=YOUTUBE_IMPORT=true`) adds "Add from YouTube link", which talks to YouTube only to fetch the audio you ask for and saves it on the phone. It is never published to the Releases page. Downloading from YouTube breaks YouTube's Terms of Service; only save audio you have the right to (your own uploads, Creative Commons, or creator-permitted downloads).
+- **Optional YouTube build.** A separate personal build (`--dart-define=YOUTUBE_IMPORT=true`) adds "Add from YouTube link", which talks to YouTube only to fetch the audio you ask for and saves it on the phone, as MP3 (converted on the phone with FFmpeg) or as the original .m4a. It is never published to the Releases page. Downloading from YouTube breaks YouTube's Terms of Service; only save audio you have the right to (your own uploads, Creative Commons, or creator-permitted downloads).
 - **No cloud backup.** On Android, `allowBackup` is off and data-extraction rules exclude everything from cloud backup and device-to-device transfer. On iPhone, the app's files are not shared through the Files app.
 - Your music, library database and artwork live in app-private storage on the device. If you uninstall the app, they are deleted.
 

@@ -9,8 +9,9 @@ import '../core/app_paths.dart';
 import '../core/models.dart';
 import '../data/library_repository.dart';
 import '../import/import_service.dart';
+import 'mp3_converter.dart';
 
-enum YouTubePhase { lookingUp, downloading, importing, done, failed }
+enum YouTubePhase { lookingUp, downloading, converting, importing, done, failed }
 
 /// One update from [YouTubeImportService.importLink].
 class YouTubeProgress {
@@ -57,9 +58,14 @@ class YouTubeImportService {
   static String? videoIdFrom(String text) => VideoId.parseVideoId(text.trim());
 
   /// Stops an in-progress download. The partial file is deleted.
-  void cancel() => _cancelled = true;
+  void cancel() {
+    _cancelled = true;
+    Mp3Converter.cancel();
+  }
 
-  Stream<YouTubeProgress> importLink(String link) async* {
+  /// With [asMp3] the audio is converted to MP3 before it's added; if the
+  /// conversion fails, the original .m4a/.webm is kept instead.
+  Stream<YouTubeProgress> importLink(String link, {bool asMp3 = false}) async* {
     _cancelled = false;
     final id = videoIdFrom(link);
     if (id == null) {
@@ -70,6 +76,7 @@ class YouTubeImportService {
 
     final yt = YoutubeExplode();
     File? file;
+    File? mp3File;
     try {
       yield const YouTubeProgress(YouTubePhase.lookingUp, 'Looking up video…');
 
@@ -174,17 +181,41 @@ class YouTubeImportService {
         return;
       }
 
+      var toImport = saved;
+      var note = '';
+      if (asMp3) {
+        yield YouTubeProgress(
+            YouTubePhase.converting, 'Converting to MP3…',
+            title: title);
+        final (tagTitle, tagArtist) = _splitStem(p.basenameWithoutExtension(saved.path));
+        final mp3 = await Mp3Converter.convert(saved,
+            title: tagTitle, artist: tagArtist);
+        if (_cancelled) {
+          if (mp3 != null) await _deleteQuietly(mp3);
+          yield YouTubeProgress(YouTubePhase.failed, 'Cancelled.', title: title);
+          return;
+        }
+        if (mp3 != null) {
+          toImport = mp3;
+          mp3File = mp3;
+        } else {
+          note = " MP3 conversion failed, so it was kept as .${p.extension(saved.path).replaceFirst('.', '')}.";
+        }
+      }
+
       yield YouTubeProgress(YouTubePhase.importing, 'Adding to your library…',
           title: title);
-      final hash = (await sha256.bind(saved.openRead()).first).toString();
+      final hash = (await sha256.bind(toImport.openRead()).first).toString();
       ImportProgress? result;
-      await for (final progress in _importer.importFiles([saved.path])) {
+      await for (final progress in _importer.importFiles([toImport.path])) {
         result = progress;
       }
 
       if (result != null && result.added > 0) {
         await _saveThumbnail(video, hash);
-        yield YouTubeProgress(YouTubePhase.done, 'Added to your library.',
+        yield YouTubeProgress(
+            YouTubePhase.done,
+            'Added to your library${toImport.path.endsWith('.mp3') ? ' as MP3' : ''}.$note',
             title: title);
       } else if (result != null && result.duplicates > 0) {
         yield YouTubeProgress(
@@ -197,6 +228,7 @@ class YouTubeImportService {
       }
     } finally {
       await _deleteQuietly(file);
+      await _deleteQuietly(mp3File);
       yt.close();
     }
   }
@@ -238,6 +270,15 @@ class YouTubeImportService {
         .trim();
     if (safe.length > 120) safe = safe.substring(0, 120).trim();
     return safe.isEmpty ? video.id.value : safe;
+  }
+
+  /// "Artist - Title" (the file stem built by [_fileStem]) back into parts.
+  static (String, String?) _splitStem(String stem) {
+    final i = stem.indexOf(' - ');
+    if (i > 0) {
+      return (stem.substring(i + 3).trim(), stem.substring(0, i).trim());
+    }
+    return (stem, null);
   }
 
   static final RegExp _noise = RegExp(

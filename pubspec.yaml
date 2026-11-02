@@ -26,6 +26,8 @@ dependencies:
   # YouTube audio import. Only used by builds made with
   # --dart-define=YOUTUBE_IMPORT=true (see lib/core/features.dart).
   youtube_explode_dart: ^3.1.0
+  # MP3 conversion for YouTube imports (LGPL audio-only FFmpeg build).
+  ffmpeg_kit_flutter_new_audio: ">=2.0.0 <6.0.0"
 
 dev_dependencies:
   flutter_test:

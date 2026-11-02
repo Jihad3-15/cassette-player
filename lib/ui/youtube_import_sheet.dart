@@ -29,6 +29,7 @@ class YouTubeImportSheet extends StatefulWidget {
 class _YouTubeImportSheetState extends State<YouTubeImportSheet> {
   final _link = TextEditingController();
   bool _confirmed = false;
+  bool _asMp3 = true;
   bool _running = false;
   YouTubeProgress? _progress;
   StreamSubscription<YouTubeProgress>? _sub;
@@ -67,7 +68,7 @@ class _YouTubeImportSheetState extends State<YouTubeImportSheet> {
       _running = true;
       _progress = null;
     });
-    _sub = service.importLink(_link.text).listen(
+    _sub = service.importLink(_link.text, asMp3: _asMp3).listen(
       (p) {
         if (!mounted) return;
         setState(() {
@@ -116,7 +117,7 @@ class _YouTubeImportSheetState extends State<YouTubeImportSheet> {
             Text('Add from YouTube', style: theme.textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              'Saves the video\'s audio on this phone as .m4a. Nothing is uploaded.',
+              'Saves the video\'s audio on this phone. Nothing is uploaded.',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -140,6 +141,15 @@ class _YouTubeImportSheetState extends State<YouTubeImportSheet> {
               ),
             ),
             const SizedBox(height: 8),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _asMp3,
+              onChanged: _running ? null : (v) => setState(() => _asMp3 = v),
+              title: const Text('Save as MP3'),
+              subtitle: Text(_asMp3
+                  ? 'Converted on the phone. Plays anywhere; slightly lower quality.'
+                  : 'Keeps YouTube\'s original audio (.m4a). Best quality.'),
+            ),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
